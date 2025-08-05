@@ -1,8 +1,17 @@
 #include "SFML/Graphics.hpp"
+#include "imgui.h"
+#include "imgui-SFML.h"
+
 
 int main(int argc, char* arv[])
 {
 	sf::RenderWindow render_window(sf::VideoMode(1080, 720), "My Window");
+	sf::Clock delta_clock;
+
+	ImGui::SFML::Init(render_window);
+	ImGui::GetIO().FontGlobalScale = 1.5f;
+	ImGui::GetStyle().ScaleAllSizes(1.5f);
+	
 
 	while (render_window.isOpen())
 	{
@@ -10,12 +19,27 @@ int main(int argc, char* arv[])
 
 		while(render_window.pollEvent(event))
 		{
+			ImGui::SFML::ProcessEvent(event);
+
 			if (event.type == sf::Event::Closed) render_window.close();
 		}
 
+		ImGui::SFML::Update(render_window, delta_clock.restart());
+
+		ImGui::Begin("ImGui Window");
+
+		ImGui::Text("Hello ImGui!");
+
+		ImGui::End();
+
 		render_window.clear(sf::Color(0, 0, 0));
+
+		ImGui::SFML::Render(render_window);
+
 		render_window.display();
 	}
+
+	ImGui::SFML::Shutdown(render_window);
 
 	return 0;
 }
