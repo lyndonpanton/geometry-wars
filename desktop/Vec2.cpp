@@ -1,7 +1,7 @@
 #include "Vec2.h"
 
 template <typename T>
-Vec2<T>::Vec2() {}
+Vec2<T>::Vec2() { }
 
 template <typename T>
 Vec2<T>::Vec2(T xin, T yin)
@@ -66,14 +66,14 @@ void Vec2<T>::operator-=(const Vec2& vector)
 }
 
 template <typename T>
-void Vec2<T>::operator*=(const float scalar)
+void Vec2<T>::operator*=(const float& scalar)
 {
 	x *= scalar.x;
 	y *= scalar.y;
 }
 
 template <typename T>
-void Vec2<T>::operator/=(const float scalar)
+void Vec2<T>::operator/=(const float& scalar)
 {
 	x /= scalar.x;
 	y /= scalar.y;

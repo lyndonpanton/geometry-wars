@@ -4,8 +4,7 @@
 #include "imgui.h"
 #include "imgui-SFML.h"
 
-#include "Vec2.h"
-
+#include "Vec2.cpp"
 
 int main(int argc, char* arv[])
 {
@@ -16,12 +15,13 @@ int main(int argc, char* arv[])
 	ImGui::GetIO().FontGlobalScale = 1.5f;
 	ImGui::GetStyle().ScaleAllSizes(1.5f);
 
-	//Vec2f a(10.0f, 20.0f);
-	//Vec2f b(50.0f, 30.0f);
-	//Vec2f c = a + b;
+	Vec2f a(10.0f, 20.0f);
+	Vec2f b(50.0f, 30.0f);
+	Vec2f c(Vec2<float>(10.0f, 20.0f) + Vec2<float>(30.0f, 40.0f));
 
-	//std::cout << a.x << ", " << a.y << std::endl;
-	//std::cout << b.x << ", " << b.y << std::endl;
+	std::cout << a.x << ", " << a.y << std::endl;
+	std::cout << b.x << ", " << b.y << std::endl;
+	std::cout << c.x << ", " << c.y << std::endl;
 
 	while (render_window.isOpen())
 	{

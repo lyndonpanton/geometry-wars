@@ -32,8 +32,8 @@ public:
 
 	void operator+=(const Vec2&);
 	void operator-=(const Vec2&);
-	void operator*=(const float);
-	void operator/=(const float);
+	void operator*=(const float&);
+	void operator/=(const float&);
 
 	bool operator==(const Vec2&) const;
 	bool operator!=(const Vec2&) const;
