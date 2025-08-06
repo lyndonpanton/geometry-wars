@@ -1,6 +1,10 @@
+#include <iostream>
+
 #include "SFML/Graphics.hpp"
 #include "imgui.h"
 #include "imgui-SFML.h"
+
+#include "Vec2.h"
 
 
 int main(int argc, char* arv[])
@@ -11,12 +15,18 @@ int main(int argc, char* arv[])
 	ImGui::SFML::Init(render_window);
 	ImGui::GetIO().FontGlobalScale = 1.5f;
 	ImGui::GetStyle().ScaleAllSizes(1.5f);
-	
+
+	//Vec2f a(10.0f, 20.0f);
+	//Vec2f b(50.0f, 30.0f);
+	//Vec2f c = a + b;
+
+	//std::cout << a.x << ", " << a.y << std::endl;
+	//std::cout << b.x << ", " << b.y << std::endl;
 
 	while (render_window.isOpen())
 	{
 		sf::Event event;
-
+		
 		while(render_window.pollEvent(event))
 		{
 			ImGui::SFML::ProcessEvent(event);
