@@ -4,7 +4,7 @@
 #include "imgui.h"
 #include "imgui-SFML.h"
 
-#include "Vec2.cpp"
+#include "Vec2.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -18,6 +18,10 @@ int main(int argc, char* argv[])
 	sf::CircleShape circle(50.0f, 32);
 	circle.setFillColor(sf::Color(255, 0, 0));
 	circle.setPosition(490.0f, 310.0f);
+
+	Vec2<float> v(sf::Vector2<float>(10.0f, 20.0f));
+
+	std::cout << v.x << ", " << v.y << std::endl;
 
 	while (render_window.isOpen())
 	{
