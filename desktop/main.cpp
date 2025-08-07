@@ -1,9 +1,10 @@
 #include <iostream>
 
 #include "SFML/Graphics.hpp"
-
 #include "imgui.h"
 #include "imgui-SFML.h"
+
+#include "Vec2.cpp"
 
 int main(int argc, char* argv[])
 {
