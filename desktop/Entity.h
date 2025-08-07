@@ -23,7 +23,7 @@ class Entity
 	friend class EntityManager;
 
 	ComponentTuple m_components;
-	bool m_is_active = true;
+	bool m_is_alive = true;
 	std::string m_tag = "default";
 	size_t m_id = 0;
 
@@ -31,7 +31,7 @@ class Entity
 	Entity(const size_t&, const std::string&);
 public:
 	// getters
-	bool getIsActive() const;
+	bool getIsAlive() const;
 	size_t getId() const;
 	const std::string& getTag() const;
 

@@ -1,8 +1,8 @@
 #include "Entity.h"
 
-bool Entity::getIsActive() const
+bool Entity::getIsAlive() const
 {
-	return m_is_active;
+	return m_is_alive;
 }
 
 size_t Entity::getId() const
@@ -29,7 +29,7 @@ const T& Entity::get() const
 
 void Entity::destroy()
 {
-	m_is_active = false;
+	m_is_alive = false;
 }
 
 template <typename T, typename... TArgs>
