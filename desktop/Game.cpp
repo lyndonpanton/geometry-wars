@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 
 #include "imgui.h"
 #include "imgui-SFML.h"
@@ -12,11 +13,152 @@ Game::Game(const std::string& configuration)
 
 void Game::init(const std::string& filepath)
 {
-	// read in configuration file, set Player, Enemy, Bullet Configuration members
+	std::ifstream fs(filepath);
+	std::string current_line;
 
-	// modify the below two statements to use configuration file
-	m_render_window.create(sf::VideoMode(1280, 720), "Geometry Wars");
-	m_render_window.setFramerateLimit(60);
+	while (fs >> current_line)
+	{
+		if (current_line == "Window")
+		{
+			int window_width;
+			int window_height;
+			int framerate_limit;
+			int fullscreen_mode;
+
+			fs >> window_width >> window_height >> framerate_limit
+				>> fullscreen_mode;
+
+			m_render_window.setFramerateLimit(framerate_limit);
+
+			if (fullscreen_mode == 1)
+			{
+				m_render_window.create(
+					sf::VideoMode(window_width, window_height),
+					"Geometry Wars",
+					sf::Style::Fullscreen
+				);
+			}
+			else
+			{
+				m_render_window.create(
+					sf::VideoMode(window_width, window_height),
+					"Geometry Wars",
+					sf::Style::Default
+				);
+			}
+
+			std::cout << "Window configuration read" << std::endl;
+		}
+		else if (current_line == "Font")
+		{
+			std::string font_file_path;
+			int font_size;
+			int font_colour_red;
+			int font_colour_green;
+			int font_colour_blue;
+
+			fs >> font_file_path >> font_size >> font_colour_red
+				>> font_colour_green >> font_colour_blue;
+
+			if (!m_font.loadFromFile(font_file_path))
+			{
+				std::cerr << "Error: Could not load font" << std::endl;
+				exit(1);
+			}
+
+			m_text.setFont(m_font);
+			m_text.setCharacterSize(font_size);
+			m_text.setFillColor(sf::Color(
+				font_colour_red, font_colour_green, font_colour_blue
+			));
+
+			std::cout << "Font configuration read" << std::endl;
+		}
+		else if (current_line == "Player")
+		{
+			int shape_radius;
+			int collision_radius;
+			float speed;
+			int fill_colour_red;
+			int fill_colour_green;
+			int fill_colour_blue;
+			int outline_colour_red;
+			int outline_colour_green;
+			int outline_colour_blue;
+			int outline_thickness;
+			int vertice_count;
+
+			fs >> shape_radius >> collision_radius >> speed >> fill_colour_red
+				>> fill_colour_green >> fill_colour_blue >> outline_colour_red
+				>> outline_colour_green >> outline_colour_blue
+				>> outline_thickness >> vertice_count;
+
+			m_player_configuration = {
+				shape_radius, collision_radius, fill_colour_red,
+				fill_colour_green, fill_colour_blue, outline_colour_red,
+				outline_colour_green, outline_colour_blue, outline_thickness,
+				vertice_count, speed
+			};
+
+			std::cout << "Player configuration read" << std::endl;
+		}
+		else if (current_line == "Enemy")
+		{
+			int shape_radius;
+			int collision_radius;
+			float speed_min;
+			float speed_max;
+			int outline_colour_red;
+			int outline_colour_green;
+			int outline_colour_blue;
+			int outline_thickness;
+			int vertice_count_min;
+			int vertice_count_max;
+			int lifespan;
+			int spawn_interval;
+
+			fs >> shape_radius >> collision_radius >> speed_min >> speed_max
+				>> outline_colour_red >> outline_colour_green
+				>> outline_colour_blue >> outline_thickness
+				>> vertice_count_min >> vertice_count_max >> lifespan
+				>> spawn_interval;
+
+			m_enemy_configuration = {
+				shape_radius, collision_radius, outline_colour_red,
+				outline_colour_green, outline_colour_blue, vertice_count_min,
+				vertice_count_max, lifespan, spawn_interval, outline_thickness,
+				speed_min, speed_max
+			};
+
+			std::cout << "Enemy configuration read" << std::endl;
+		}
+		else if (current_line == "Bullet")
+		{
+			int shape_radius;
+			int collision_radius;
+			float speed;
+			int fill_colour_red;
+			int fill_colour_green;
+			int fill_colour_blue;
+			int outline_colour_red;
+			int outline_colour_green;
+			int outline_colour_blue;
+			int outline_thickness;
+			int vertice_count;
+			int lifespan;
+
+			fs >> shape_radius >> collision_radius >> speed >> fill_colour_red
+				>> fill_colour_green >> fill_colour_blue >> outline_colour_red
+				>> outline_colour_green >> outline_thickness >> vertice_count
+				>> lifespan;
+
+			std::cout << "Bullet configuration read" << std::endl;
+		}
+		else
+		{
+			std::cout << "Error: Line type not recognised" << std::endl;
+		}
+	}
 
 	ImGui::SFML::Init(m_render_window);
 
@@ -71,15 +213,23 @@ void Game::setPaused(bool paused)
 
 void Game::spawnPlayer()
 {
-	// player should spawn and respawn in the middle of the screen
-	// modify the code bellow so that is uses the configuration file
-
 	auto entity = m_entities.addEntity("player");
 
-	entity->add<CTransform>(Vec2f(200.0f, 200.0f), Vec2f(1.0f, 1.0f), 0.0f);
+	//entity->add<CTransform>(Vec2f(200.0f, 200.0f), Vec2f(1.0f, 1.0f), 0.0f);
+	entity->add<CTransform>(
+		Vec2f(m_render_window.getSize().x / 2, m_render_window.getSize().y / 2),
+		Vec2f(0.0f, 0.0f),
+		0.0f
+	);
 
-	entity->add<CShape>(
+	/*entity->add<CShape>(
 		32.0f, 8, sf::Color(10, 10, 10), sf::Color(255, 0, 0), 4.0f
+	);*/
+	entity->add<CShape>(
+		m_player_configuration.SR, m_player_configuration.V,
+		sf::Color(m_player_configuration.FR, m_player_configuration.FG, m_player_configuration.FB),
+		sf::Color(m_player_configuration.OR, m_player_configuration.OG, m_player_configuration.OB),
+		m_player_configuration.OT
 	);
 
 	entity->add<CInput>();
