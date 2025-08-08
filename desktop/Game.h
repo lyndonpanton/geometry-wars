@@ -18,6 +18,11 @@
 //#include "CSpecialAbility.hpp"
 //#include "CTransform.hpp"
 
+struct WindowConfiguration
+{
+	int W, H, FL; bool FS;
+};
+
 struct PlayerConfiguration
 {
 	int SR, CR, FR, FG, FB, OR, OG, OB, OT, V; float S;
@@ -41,6 +46,7 @@ class Game
 
 	EntityManager m_entities;
 
+	WindowConfiguration m_window_configuration;
 	PlayerConfiguration m_player_configuration;
 	EnemyConfiguration m_enemy_configuration;
 	BulletConfiguration m_bullet_configuration;

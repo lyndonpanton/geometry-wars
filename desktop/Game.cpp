@@ -28,12 +28,20 @@ void Game::init(const std::string& filepath)
 			fs >> window_width >> window_height >> framerate_limit
 				>> fullscreen_mode;
 
-			m_render_window.setFramerateLimit(framerate_limit);
+			m_window_configuration.W = window_width;
+			m_window_configuration.H = window_height;
+			m_window_configuration.FL = framerate_limit;
+			m_window_configuration.FS = fullscreen_mode;
 
-			if (fullscreen_mode == 1)
+			m_render_window.setFramerateLimit(m_window_configuration.FL);
+
+			if (m_window_configuration.FS == 1)
 			{
 				m_render_window.create(
-					sf::VideoMode(window_width, window_height),
+					sf::VideoMode(
+						m_window_configuration.W,
+						m_window_configuration.H
+					),
 					"Geometry Wars",
 					sf::Style::Fullscreen
 				);
@@ -41,7 +49,10 @@ void Game::init(const std::string& filepath)
 			else
 			{
 				m_render_window.create(
-					sf::VideoMode(window_width, window_height),
+					sf::VideoMode(
+						m_window_configuration.W,
+						m_window_configuration.H
+					),
 					"Geometry Wars",
 					sf::Style::Default
 				);
@@ -149,8 +160,8 @@ void Game::init(const std::string& filepath)
 
 			fs >> shape_radius >> collision_radius >> speed >> fill_colour_red
 				>> fill_colour_green >> fill_colour_blue >> outline_colour_red
-				>> outline_colour_green >> outline_thickness >> vertice_count
-				>> lifespan;
+				>> outline_colour_green >> outline_colour_blue
+				>> outline_thickness >> vertice_count >> lifespan;
 
 			std::cout << "Bullet configuration read" << std::endl;
 		}
@@ -192,15 +203,19 @@ void Game::run()
 
 		ImGui::SFML::Update(m_render_window, m_delta_clock.restart());
 
-		systemEnemySpawner();
-		systemMovement();
-		systemCollision();
+		if (!m_is_paused)
+		{
+			systemEnemySpawner();
+			systemMovement();
+			systemCollision();
+			systemLifespan();
+
+			m_current_frame++;
+		}
+
 		systemInput();
 		systemGUI();
-		systemLifespan();
 		systemRender();
-
-		m_current_frame++;
 	}
 }
 
@@ -209,6 +224,7 @@ void Game::setPaused(bool paused)
 	// pause or unpause the game
 	// - lifespan should not deplete whilst the game is paused
 	// - entities may still rotate whilst the game is paused if you would like
+	m_is_paused = paused;
 }
 
 void Game::spawnPlayer()
@@ -272,11 +288,35 @@ void Game::systemMovement()
 	// the CInput component of m_player should be read to determine whether the
 	// player is moving
 
-
+	
 	// sample movement speed update
+
+	auto& input = player()->get<CInput>();
 	auto& transform = player()->get<CTransform>();
 
+	if (input.is_up_pressed)
+	{
+		transform.velocity.y -=
+			(m_player_configuration.S / m_window_configuration.FL);
+	}
+	if (input.is_right_pressed)
+	{
+		transform.velocity.x +=
+			(m_player_configuration.S / m_window_configuration.FL);
+	}
+	if (input.is_down_pressed)
+	{
+		transform.velocity.y +=
+			(m_player_configuration.S / m_window_configuration.FL);
+	}
+	if (input.is_left_pressed)
+	{
+		transform.velocity.x -=
+			(m_player_configuration.S / m_window_configuration.FL);
+	}
+
 	transform.position += transform.velocity;
+	transform.velocity = { 0.0, 0.0 };
 }
 
 void Game::systemLifespan()
@@ -286,10 +326,32 @@ void Game::systemLifespan()
 	//     - if entity has not lifespan component, skip it
 	//     - if lifespan component has lifespan_remaining greater than 0, subtract
 	//     1 from it
-	//     - if enitty has lifespan component and is alive
+	//     - if entity has lifespan component and is alive
 	//         - modify its alpha channel appropriately
 	//     - if entity has a lifespan component and lifespan_remaining is less
 	//     than 0, destroy it
+
+	for (auto& entity : m_entities.getEntities())
+	{
+		auto& lifespan = entity->get<CLifespan>();
+
+		if (!lifespan.exists) continue;
+
+		if (lifespan.lifespan_remaining >= 0)
+		{
+			lifespan.lifespan_remaining -= 1;
+		}
+		
+		if (entity->getIsActive())
+		{
+			// modify alpha channel
+		}
+
+		if (lifespan.lifespan_remaining < 0)
+		{
+			
+		}
+	}
 }
 
 void Game::systemCollision()
@@ -351,7 +413,8 @@ void Game::systemRender()
 		.circle.setPosition(player()->get<CTransform>().position);
 
 	// update transform rotation
-	player()->get<CTransform>().angle += 1.0f;
+	player()->get<CTransform>().angle +=
+		(1.0f / m_window_configuration.FL);
 	// update shape rotation using transform rotation
 	player()->get<CShape>()
 		.circle.setRotation(player()->get<CTransform>().angle);
@@ -387,15 +450,19 @@ void Game::systemInput()
 			{
 				case sf::Keyboard::W:
 					// update player's CInput
+					player()->get<CInput>().is_up_pressed = true;
 					break;
 				case sf::Keyboard::D:
 					// update player's CInput
+					player()->get<CInput>().is_right_pressed = true;
 					break;
 				case sf::Keyboard::S:
 					// update player's CInput
+					player()->get<CInput>().is_down_pressed = true;
 					break;
 				case sf::Keyboard::A:
 					// update player's CInput
+					player()->get<CInput>().is_left_pressed = true;
 					break;
 				case sf::Keyboard::Escape:
 					m_is_running = false;
@@ -410,18 +477,23 @@ void Game::systemInput()
 			{
 				case sf::Keyboard::W:
 					// update player's CInput
+					player()->get<CInput>().is_up_pressed = false;
 					break;
 				case sf::Keyboard::D:
 					// update player's CInput
+					player()->get<CInput>().is_right_pressed = false;
 					break;
 				case sf::Keyboard::S:
 					// update player's CInput
+					player()->get<CInput>().is_down_pressed = false;
 					break;
 				case sf::Keyboard::A:
 					// update player's CInput
+					player()->get<CInput>().is_left_pressed = false;
 					break;
 				case sf::Keyboard::P:
 					// call method for  modifying pause state
+					setPaused(!m_is_paused);
 					break;
 				default:
 					break;
@@ -435,7 +507,7 @@ void Game::systemInput()
 
 			if (event.mouseButton.button == sf::Mouse::Left)
 			{
-				std::cout << "(" << event.mouseButton.x << ", "
+				std::cout << "Left: (" << event.mouseButton.x << ", "
 					<< event.mouseButton.y << ")" << std::endl;
 
 				// use mouse position (along with player position) to determine
@@ -445,7 +517,7 @@ void Game::systemInput()
 
 			if (event.mouseButton.button == sf::Mouse::Right)
 			{
-				std::cout << "(" << event.mouseButton.x << ", "
+				std::cout << "Right: (" << event.mouseButton.x << ", "
 					<< event.mouseButton.y << ")" << std::endl;
 
 				// use mouse position (along with player position) to determine
