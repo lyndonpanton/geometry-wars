@@ -1,6 +1,6 @@
 #include "Component.h"
 
-class CShape : Component
+class CShape : public Component
 {
 
 public:
@@ -9,7 +9,7 @@ public:
 	CShape() = default;
 	CShape(
 		float radius, size_t point_count, const sf::Color& fill_colour,
-		const sf::Color& outline_colour, size_t outline_thickness
+		const sf::Color& outline_colour, float outline_thickness
 	)
 		: circle(radius, point_count)
 	{

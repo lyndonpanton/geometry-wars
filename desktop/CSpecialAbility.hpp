@@ -5,4 +5,5 @@ class CSpecialAbility : public Component
 
 public:
 	// implement
+	CSpecialAbility() = default;
 };

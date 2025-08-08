@@ -32,7 +32,11 @@ class Entity
 	size_t m_id = 0;
 
 	// private constructor
-	Entity(const size_t&, const std::string&);
+	Entity(const size_t& id, const std::string& tag)
+	{
+		m_id = id;
+		m_tag = tag;
+	}
 public:
 	// constuctor
 
@@ -47,14 +51,48 @@ public:
 	// overloads
 
 	// other
+	//template <typename T, typename... TArgs>
+	//T& add(TArgs&&... m_args);
+	//template <typename T>
+	//T& get();
+	//template <typename T>
+	//const T& get() const;
+	//template <typename T>
+	//bool has() const;
+	//template <typename T>
+	//void remove();
+
 	template <typename T, typename... TArgs>
-	T& add(TArgs&&... m_args);
+	T& add(TArgs&&... m_args)
+	{
+		auto& component = get<T>();
+		component = T(std::forward<TArgs>(m_args)...);
+		component.exists = true;
+
+		return component;
+	}
+
 	template <typename T>
-	T& get();
+	T& get()
+	{
+		return std::get<T>(m_components);
+	}
+
 	template <typename T>
-	const T& get() const;
+	const T& get() const
+	{
+		return std::get<T>(m_components);
+	}
+
 	template <typename T>
-	bool has() const;
+	bool has() const
+	{
+		return get<T>().exists;
+	}
+
 	template <typename T>
-	void remove();
+	void remove()
+	{
+		get<T>() = T();
+	}
 };

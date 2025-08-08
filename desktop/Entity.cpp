@@ -27,36 +27,36 @@ void Entity::destroy()
 // overloads
 
 // other
-template <typename T, typename... TArgs>
-T& Entity::add(TArgs&&... m_args)
-{
-	auto component = get<T>();
-	component = T(std::forward<TArgs>(m_args));
-	component.exists = true;
-
-	return component;
-}
-
-template <typename T>
-T& Entity::get()
-{
-	return std::get<T>(m_components);
-}
-
-template <typename T>
-const T& Entity::get() const
-{
-	return std::get<T>(m_components);
-}
-
-template <typename T>
-bool Entity::has() const
-{
-	return get<T>().exists;
-}
-
-template <typename>
-void Entity::remove()
-{
-	get<T>() = T();
-}
+//template <typename T, typename... TArgs>
+//T& Entity::add(TArgs&&... m_args)
+//{
+//	auto component = get<T>();
+//	component = T(std::forward<TArgs>(m_args));
+//	component.exists = true;
+//
+//	return component;
+//}
+//
+//template <typename T>
+//T& Entity::get()
+//{
+//	return std::get<T>(m_components);
+//}
+//
+//template <typename T>
+//const T& Entity::get() const
+//{
+//	return std::get<T>(m_components);
+//}
+//
+//template <typename T>
+//bool Entity::has() const
+//{
+//	return get<T>().exists;
+//}
+//
+//template <typename T>
+//void Entity::remove()
+//{
+//	get<T>() = T();
+//}
