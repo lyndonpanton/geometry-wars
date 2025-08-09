@@ -136,8 +136,8 @@ void Game::init(const std::string& filepath)
 
 			m_enemy_configuration = {
 				shape_radius, collision_radius, outline_colour_red,
-				outline_colour_green, outline_colour_blue, vertice_count_min,
-				vertice_count_max, lifespan, spawn_interval, outline_thickness,
+				outline_colour_green, outline_colour_blue, outline_thickness,
+				vertice_count_min, vertice_count_max, lifespan, spawn_interval, 
 				speed_min, speed_max
 			};
 
@@ -231,16 +231,12 @@ void Game::spawnPlayer()
 {
 	auto entity = m_entities.addEntity("player");
 
-	//entity->add<CTransform>(Vec2f(200.0f, 200.0f), Vec2f(1.0f, 1.0f), 0.0f);
 	entity->add<CTransform>(
 		Vec2f(m_render_window.getSize().x / 2, m_render_window.getSize().y / 2),
 		Vec2f(0.0f, 0.0f),
 		0.0f
 	);
 
-	/*entity->add<CShape>(
-		32.0f, 8, sf::Color(10, 10, 10), sf::Color(255, 0, 0), 4.0f
-	);*/
 	entity->add<CShape>(
 		m_player_configuration.SR, m_player_configuration.V,
 		sf::Color(m_player_configuration.FR, m_player_configuration.FG, m_player_configuration.FB),
@@ -256,6 +252,73 @@ void Game::spawnEnemyLarge()
 	// make sure enemy is spawned property with the enemy configuration variables
 	// enemy must be spawned at a random position (using configuration variables)
 	// enemy must be spawned completely within the bounds of the window
+
+	/* configuration
+		- shape radius
+		- collision radius
+		- min speed
+		- max speed
+		- outline red
+		- outline green
+		- outline blue
+		- outline thickness
+		- min vertices
+		- max vertices
+		- lifespan small
+		- spawn interval
+	*/
+
+	auto entity = m_entities.addEntity("enemy");
+
+	int min_vertices = m_enemy_configuration.VMIN;
+	int max_vertices = m_enemy_configuration.VMAX;
+
+	int vertices = min_vertices + (rand() % (1 + max_vertices - min_vertices));
+
+	int fill_red = 0 + (rand() % (1 + 255 - 0));
+	int fill_green = 0 + (rand() % (1 + 255 - 0));
+	int fill_blue = 0 + (rand() % (1 + 255 - 0));
+
+	int outline_red = 0 + (rand() % (1 + 255 - 0));
+	int outline_green = 0 + (rand() % (1 + 255 - 0));
+	int outline_blue = 0 + (rand() % (1 + 255 - 0));
+
+	entity->add<CShape>(
+		m_enemy_configuration.SR, vertices,
+		sf::Color(fill_red, fill_green, fill_blue),
+		sf::Color(outline_red, outline_green, outline_blue),
+		m_enemy_configuration.OT
+	);
+
+	int radius = entity->get<CShape>().circle.getRadius();
+
+	int min_position_x = radius;
+	int max_position_x =
+		m_window_configuration.W - radius;
+
+	int min_position_y = radius;
+	int max_position_y =
+		m_window_configuration.H - radius;
+
+	int position_x = min_position_x + (rand() % (1 + max_position_x - min_position_x));
+	int position_y = min_position_y + (rand() % (1 + max_position_y - min_position_y));
+
+	int min_velocity = m_enemy_configuration.SMIN;
+	int max_velocity = m_enemy_configuration.SMAX;
+
+	int velocity_x = min_velocity + (rand() % (1 + max_velocity - min_velocity));
+	int velocity_y = min_velocity + (rand() % (1 + max_velocity - min_velocity));
+
+	entity->add<CTransform>(
+		Vec2f(position_x, position_y),
+		Vec2f(velocity_x, velocity_y),
+		0.0f
+	);
+
+	entity->add<CScore>(10);
+
+
+	entity->add<CCollision>(m_enemy_configuration.CR);
 
 	m_last_enemy_spawn_time = m_current_frame;
 }
@@ -389,6 +452,19 @@ void Game::systemEnemySpawner()
 {
 	// implement enemy spawner
 	// check when the last time an enemy was spawned
+
+	// 100, 100
+	// 101, 100
+	// 102, 100
+	// ...
+	// 160, 100
+	if (
+		m_current_frame - m_last_enemy_spawn_time
+		>= m_enemy_configuration.SI * 1000
+	)
+	{
+		spawnEnemyLarge();
+	}
 }
 
 void Game::systemGUI()
@@ -404,23 +480,49 @@ void Game::systemGUI()
 
 void Game::systemRender()
 {
-	// modify code bellow to draw all entities, not just the player
-	// loop over all entities to achieve this
 	m_render_window.clear();
 
-	// update position
-	player()->get<CShape>()
-		.circle.setPosition(player()->get<CTransform>().position);
+	for (auto& entity : m_entities.getEntities())
+	{
+		// modify code bellow to draw all entities, not just the player
+		// loop over all entities to achieve this
 
-	// update transform rotation
-	player()->get<CTransform>().angle +=
-		(1.0f / m_window_configuration.FL);
-	// update shape rotation using transform rotation
-	player()->get<CShape>()
-		.circle.setRotation(player()->get<CTransform>().angle);
+		// determine entity type
 
-	// draw player sf::CircleShape
-	m_render_window.draw(player()->get<CShape>().circle);
+		if (entity == player())
+		{
+			// update position
+			player()->get<CShape>()
+				.circle.setPosition(player()->get<CTransform>().position);
+
+			// update transform rotation
+			player()->get<CTransform>().angle +=
+				(1.0f / m_window_configuration.FL);
+			// update shape rotation using transform rotation
+			player()->get<CShape>()
+				.circle.setRotation(player()->get<CTransform>().angle);
+
+			// draw player sf::CircleShape
+			m_render_window.draw(player()->get<CShape>().circle);
+		}
+		else {
+			std::cout << "enemy" << std::endl;
+		}
+		
+		
+		if (entity->getTag() == "enemy")
+		{
+			std::cout << "enemy" << std::endl;
+		}
+		else if (entity->getTag() == "bullet")
+		{
+
+		}
+		else
+		{
+			std::cout << "Invalid entity found" << std::endl;
+		}
+	}
 
 	// draw ui last
 	ImGui::SFML::Render(m_render_window);
