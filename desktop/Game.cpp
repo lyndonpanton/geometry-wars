@@ -480,6 +480,13 @@ void Game::systemGUI()
 			ImGui::Checkbox("Spawning", &gui.spawning);
 
 			// implement: spawn rate slider
+			ImGui::SliderInt(
+				"Spawn",
+				&gui.spawn_interval,
+				10, 150
+			);
+
+			m_enemy_configuration.SI = gui.spawn_interval;
 
 			if (ImGui::Button("Manual Spawn"))
 			{
