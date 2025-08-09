@@ -8,6 +8,7 @@
 #include "SFML/Graphics.hpp"
 
 #include "EntityManager.h"
+#include "GUI.hpp"
 
 //#include "Component.h"
 //#include "CCollision.hpp"
@@ -52,6 +53,8 @@ class Game
 	BulletConfiguration m_bullet_configuration;
 
 	sf::Clock m_delta_clock;
+
+	GUI gui;
 
 	int m_score = 0;
 	int m_current_frame = 0;

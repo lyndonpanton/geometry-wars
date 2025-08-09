@@ -13,6 +13,7 @@ Game::Game(const std::string& configuration)
 
 void Game::init(const std::string& filepath)
 {
+
 	std::ifstream fs(filepath);
 	std::string current_line;
 
@@ -141,6 +142,8 @@ void Game::init(const std::string& filepath)
 				speed_min, speed_max
 			};
 
+			gui = GUI(spawn_interval);
+
 			std::cout << "Enemy configuration read" << std::endl;
 		}
 		else if (current_line == "Bullet")
@@ -205,16 +208,16 @@ void Game::run()
 
 		if (!m_is_paused)
 		{
-			systemEnemySpawner();
-			systemMovement();
-			systemCollision();
-			systemLifespan();
+			if (gui.spawning) systemEnemySpawner();
+			if (gui.movement) systemMovement();
+			if (gui.collision) systemCollision();
+			if (gui.lifespan) systemLifespan();
 
 			m_current_frame++;
 		}
 
 		systemInput();
-		systemGUI();
+		if (gui.gui) systemGUI();
 		systemRender();
 	}
 }
@@ -452,12 +455,6 @@ void Game::systemEnemySpawner()
 {
 	// implement enemy spawner
 	// check when the last time an enemy was spawned
-
-	// 100, 100
-	// 101, 100
-	// 102, 100
-	// ...
-	// 160, 100
 	if (
 		m_current_frame - m_last_enemy_spawn_time
 		>= m_enemy_configuration.SI * 1000
@@ -473,7 +470,36 @@ void Game::systemGUI()
 
 	ImGui::Begin("Geometry Wars");
 
-	ImGui::Text("Content...");
+	if (ImGui::BeginTabBar("Geometry Wars Tab"))
+	{
+		if (ImGui::BeginTabItem("System"))
+		{
+			ImGui::Checkbox("Movement", &gui.movement);
+			ImGui::Checkbox("Lifespan", &gui.lifespan);
+			ImGui::Checkbox("Collision", &gui.collision);
+			ImGui::Checkbox("Spawning", &gui.spawning);
+
+			// implement: spawn rate slider
+
+			if (ImGui::Button("Manual Spawn"))
+			{
+				spawnEnemyLarge();
+			}
+
+			ImGui::Checkbox("GUI", &gui.gui);
+			ImGui::Checkbox("Rendering", &gui.rendering);
+
+			ImGui::EndTabItem();
+		}
+
+		if (ImGui::BeginTabItem("Entity"))
+		{
+			ImGui::Text("Tab 2");
+			ImGui::EndTabItem();
+		}
+
+		ImGui::EndTabBar();
+	}
 
 	ImGui::End();
 }
@@ -482,45 +508,45 @@ void Game::systemRender()
 {
 	m_render_window.clear();
 
-	for (auto& entity : m_entities.getEntities())
+	if (gui.rendering)
 	{
-		// modify code bellow to draw all entities, not just the player
-		// loop over all entities to achieve this
 
-		// determine entity type
-
-		if (entity == player())
+		for (auto& entity : m_entities.getEntities())
 		{
-			// update position
-			player()->get<CShape>()
-				.circle.setPosition(player()->get<CTransform>().position);
+			// modify code bellow to draw all entities, not just the player
+			// loop over all entities to achieve this
 
-			// update transform rotation
-			player()->get<CTransform>().angle +=
-				(1.0f / m_window_configuration.FL);
-			// update shape rotation using transform rotation
-			player()->get<CShape>()
-				.circle.setRotation(player()->get<CTransform>().angle);
+			// determine entity type
 
-			// draw player sf::CircleShape
-			m_render_window.draw(player()->get<CShape>().circle);
-		}
-		else {
-			std::cout << "enemy" << std::endl;
-		}
-		
-		
-		if (entity->getTag() == "enemy")
-		{
-			std::cout << "enemy" << std::endl;
-		}
-		else if (entity->getTag() == "bullet")
-		{
+			if (entity == player())
+			{
+				// update position
+				player()->get<CShape>()
+					.circle.setPosition(player()->get<CTransform>().position);
 
-		}
-		else
-		{
-			std::cout << "Invalid entity found" << std::endl;
+				// update transform rotation
+				player()->get<CTransform>().angle +=
+					(1.0f / m_window_configuration.FL);
+				// update shape rotation using transform rotation
+				player()->get<CShape>()
+					.circle.setRotation(player()->get<CTransform>().angle);
+
+				// draw player sf::CircleShape
+				m_render_window.draw(player()->get<CShape>().circle);
+			}
+			else {
+
+			}
+
+
+			if (entity->getTag() == "enemy")
+			{
+
+			}
+			else if (entity->getTag() == "bullet")
+			{
+
+			}
 		}
 	}
 
@@ -551,19 +577,15 @@ void Game::systemInput()
 			switch (event.key.code)
 			{
 				case sf::Keyboard::W:
-					// update player's CInput
 					player()->get<CInput>().is_up_pressed = true;
 					break;
 				case sf::Keyboard::D:
-					// update player's CInput
 					player()->get<CInput>().is_right_pressed = true;
 					break;
 				case sf::Keyboard::S:
-					// update player's CInput
 					player()->get<CInput>().is_down_pressed = true;
 					break;
 				case sf::Keyboard::A:
-					// update player's CInput
 					player()->get<CInput>().is_left_pressed = true;
 					break;
 				case sf::Keyboard::Escape:
@@ -578,23 +600,18 @@ void Game::systemInput()
 			switch (event.key.code)
 			{
 				case sf::Keyboard::W:
-					// update player's CInput
 					player()->get<CInput>().is_up_pressed = false;
 					break;
 				case sf::Keyboard::D:
-					// update player's CInput
 					player()->get<CInput>().is_right_pressed = false;
 					break;
 				case sf::Keyboard::S:
-					// update player's CInput
 					player()->get<CInput>().is_down_pressed = false;
 					break;
 				case sf::Keyboard::A:
-					// update player's CInput
 					player()->get<CInput>().is_left_pressed = false;
 					break;
 				case sf::Keyboard::P:
-					// call method for  modifying pause state
 					setPaused(!m_is_paused);
 					break;
 				default:
@@ -621,6 +638,7 @@ void Game::systemInput()
 			{
 				std::cout << "Right: (" << event.mouseButton.x << ", "
 					<< event.mouseButton.y << ")" << std::endl;
+				spawnEnemyLarge();
 
 				// use mouse position (along with player position) to determine
 				// trajectory of the bullet
