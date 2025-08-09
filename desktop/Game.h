@@ -82,6 +82,10 @@ class Game
 	std::shared_ptr<Entity> player();
 
 public:
+	// member
+	int increment = 1;
+	bool is_going_right = true; // for testing
+
 	// constructor
 	Game(const std::string&);
 

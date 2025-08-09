@@ -248,6 +248,22 @@ void Game::spawnPlayer()
 	);
 
 	entity->add<CInput>();
+
+	auto enemy = m_entities.addEntity("enemy");
+
+	enemy->add<CTransform>(
+		/*Vec2f(100.0f, 100.0f),*/
+		Vec2f(m_render_window.getSize().x / 2, m_render_window.getSize().y / 2),
+		Vec2f(1.0f, 0.0f),
+		0.0f
+	);
+
+	enemy->add<CShape>(
+		16, 10,
+		sf::Color(160, 160, 240),
+		sf::Color(255, 255, 255),
+		4
+	);
 }
 
 void Game::spawnEnemyLarge()
@@ -271,7 +287,7 @@ void Game::spawnEnemyLarge()
 		- spawn interval
 	*/
 
-	auto entity = m_entities.addEntity("enemy");
+	/*auto entity = m_entities.addEntity("enemy");
 
 	int min_vertices = m_enemy_configuration.VMIN;
 	int max_vertices = m_enemy_configuration.VMAX;
@@ -321,7 +337,7 @@ void Game::spawnEnemyLarge()
 	entity->add<CScore>(10);
 
 
-	entity->add<CCollision>(m_enemy_configuration.CR);
+	entity->add<CCollision>(m_enemy_configuration.CR);*/
 
 	m_last_enemy_spawn_time = m_current_frame;
 }
@@ -501,7 +517,10 @@ void Game::systemGUI()
 
 		if (ImGui::BeginTabItem("Entity"))
 		{
-			ImGui::Text("Tab 2");
+			// implement: all entities dropdown
+
+			// implement: entity tag dropdown(s)
+
 			ImGui::EndTabItem();
 		}
 
@@ -517,9 +536,11 @@ void Game::systemRender()
 
 	if (gui.rendering)
 	{
-
+		int entity_count = 0;
 		for (auto& entity : m_entities.getEntities())
 		{
+			entity_count += 1;
+
 			// modify code bellow to draw all entities, not just the player
 			// loop over all entities to achieve this
 
@@ -548,14 +569,43 @@ void Game::systemRender()
 
 			if (entity->getTag() == "enemy")
 			{
+				// implement: use entity velocity
 
+				auto& shape = entity->get<CShape>();
+				auto& transform = entity->get<CTransform>();
+
+				// update transform position
+				if ((transform.position.x - shape.circle.getRadius() <= 0) && !is_going_right)
+				{
+					increment = 1;
+					is_going_right = !is_going_right;
+				}
+				else if ((transform.position.x + shape.circle.getRadius() >= m_window_configuration.W) && is_going_right)
+				{
+					increment = -1;
+					is_going_right = !is_going_right;
+				}
+
+				transform.position.x += increment;
+				// update shape position
+				shape.circle.setPosition(transform.position);
+				// update transform rotation
+				transform.angle += (1.0f / m_window_configuration.FL);
+				// update shape rotation using transform rotation
+				shape.circle.setRotation(transform.angle);
+
+				// draw enemy sf::CircleShape
+				m_render_window.draw(entity->get<CShape>().circle);
 			}
 			else if (entity->getTag() == "bullet")
 			{
 
 			}
 		}
+
+		//std::cout << entity_count << std::endl;
 	}
+
 
 	// draw ui last
 	ImGui::SFML::Render(m_render_window);
