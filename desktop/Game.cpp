@@ -345,7 +345,7 @@ void Game::spawnEnemyLarge()
 	) * y_inverse;
 
 	entity->add<CTransform>(
-		Vec2f(position_x / 10, position_y / 10),
+		Vec2f(position_x, position_y),
 		Vec2f(velocity_x / 10, velocity_y / 10),
 		0.0f
 	);
@@ -511,7 +511,7 @@ void Game::systemGUI()
 			ImGui::SliderInt(
 				"Spawn",
 				&gui.spawn_interval,
-				10, 150
+				3, 150
 			);
 
 			m_enemy_configuration.SI = gui.spawn_interval;
@@ -548,10 +548,8 @@ void Game::systemRender()
 
 	if (gui.rendering)
 	{
-		int entity_count = 0;
 		for (auto& entity : m_entities.getEntities())
 		{
-			entity_count += 1;
 
 			// modify code bellow to draw all entities, not just the player
 			// loop over all entities to achieve this
@@ -581,23 +579,26 @@ void Game::systemRender()
 
 			if (entity->getTag() == "enemy")
 			{
+
 				auto& shape = entity->get<CShape>();
 				auto& transform = entity->get<CTransform>();
 
+				//std::cout << ""
+
 				if (
 					transform.position.x - shape.circle.getRadius() <= 0 && transform.velocity.x < 0
-					|| transform.position.x + shape.circle.getRadius()  >= m_window_configuration.W && transform.velocity.x > 0
+					|| transform.position.x + shape.circle.getRadius() >= m_window_configuration.W && transform.velocity.x > 0
 				)
 				{
-					transform.velocity.x *= 1;
+					transform.velocity.x *= -1;
 				}
 
 				if (
 					transform.position.y - shape.circle.getRadius() <= 0 && transform.velocity.y < 0
-					|| transform.position.y + shape.circle.getRadius()  >= m_window_configuration.H && transform.velocity.y > 0
+					|| transform.position.y + shape.circle.getRadius() >= m_window_configuration.H && transform.velocity.y > 0
 				)
 				{
-					transform.velocity.y *= 1;
+					transform.velocity.y *= -1;
 				}
 
 				// update transform position
