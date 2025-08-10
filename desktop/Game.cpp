@@ -249,21 +249,21 @@ void Game::spawnPlayer()
 
 	entity->add<CInput>();
 
-	auto enemy = m_entities.addEntity("enemy");
+	//auto enemy = m_entities.addEntity("enemy");
 
-	enemy->add<CTransform>(
-		/*Vec2f(100.0f, 100.0f),*/
-		Vec2f(m_render_window.getSize().x / 2, m_render_window.getSize().y / 2),
-		Vec2f(1.0f, 0.0f),
-		0.0f
-	);
+	//enemy->add<CTransform>(
+	//	/*Vec2f(100.0f, 100.0f),*/
+	//	Vec2f(m_render_window.getSize().x / 2, m_render_window.getSize().y / 2),
+	//	Vec2f(1.0f, 0.0f),
+	//	0.0f
+	//);
 
-	enemy->add<CShape>(
-		16, 10,
-		sf::Color(160, 160, 240),
-		sf::Color(255, 255, 255),
-		4
-	);
+	//enemy->add<CShape>(
+	//	16, 10,
+	//	sf::Color(160, 160, 240),
+	//	sf::Color(255, 255, 255),
+	//	4
+	//);
 }
 
 void Game::spawnEnemyLarge()
@@ -287,7 +287,9 @@ void Game::spawnEnemyLarge()
 		- spawn interval
 	*/
 
-	/*auto entity = m_entities.addEntity("enemy");
+	srand(time(NULL));
+
+	auto entity = m_entities.addEntity("enemy");
 
 	int min_vertices = m_enemy_configuration.VMIN;
 	int max_vertices = m_enemy_configuration.VMAX;
@@ -318,26 +320,39 @@ void Game::spawnEnemyLarge()
 	int min_position_y = radius;
 	int max_position_y =
 		m_window_configuration.H - radius;
-
+	
 	int position_x = min_position_x + (rand() % (1 + max_position_x - min_position_x));
 	int position_y = min_position_y + (rand() % (1 + max_position_y - min_position_y));
 
-	int min_velocity = m_enemy_configuration.SMIN;
-	int max_velocity = m_enemy_configuration.SMAX;
+	float min_velocity = (m_enemy_configuration.SMIN * (rand() % 2 + 1)) / 10;
+	float max_velocity = (m_enemy_configuration.SMAX * (rand() % 2 + 1)) / 10;
 
-	int velocity_x = min_velocity + (rand() % (1 + max_velocity - min_velocity));
-	int velocity_y = min_velocity + (rand() % (1 + max_velocity - min_velocity));
+	srand(time(NULL));
+
+	int x_inverse = 0 + (rand() % (1 + 1 - 0));
+	if (x_inverse == 0) x_inverse = -1;
+
+	int y_inverse = 0 + (rand() % (1 + 1 - 0));
+	if (y_inverse == 0) y_inverse = -1;
+
+	float velocity_x = (
+		m_enemy_configuration.SMIN +
+		(rand() % (1 + (int) m_enemy_configuration.SMAX - (int) m_enemy_configuration.SMIN))
+	) * x_inverse;
+	float velocity_y = (
+		m_enemy_configuration.SMIN +
+		(rand() % (1 + (int)m_enemy_configuration.SMAX - (int)m_enemy_configuration.SMIN))
+	) * y_inverse;
 
 	entity->add<CTransform>(
-		Vec2f(position_x, position_y),
-		Vec2f(velocity_x, velocity_y),
+		Vec2f(position_x / 10, position_y / 10),
+		Vec2f(velocity_x / 10, velocity_y / 10),
 		0.0f
 	);
 
 	entity->add<CScore>(10);
 
-
-	entity->add<CCollision>(m_enemy_configuration.CR);*/
+	entity->add<CCollision>(m_enemy_configuration.CR);
 
 	m_last_enemy_spawn_time = m_current_frame;
 }
@@ -369,9 +384,6 @@ void Game::systemMovement()
 	// implement all entity movement
 	// the CInput component of m_player should be read to determine whether the
 	// player is moving
-
-	
-	// sample movement speed update
 
 	auto& input = player()->get<CInput>();
 	auto& transform = player()->get<CTransform>();
@@ -569,24 +581,27 @@ void Game::systemRender()
 
 			if (entity->getTag() == "enemy")
 			{
-				// implement: use entity velocity
-
 				auto& shape = entity->get<CShape>();
 				auto& transform = entity->get<CTransform>();
 
-				// update transform position
-				if ((transform.position.x - shape.circle.getRadius() <= 0) && !is_going_right)
+				if (
+					transform.position.x - shape.circle.getRadius() <= 0 && transform.velocity.x < 0
+					|| transform.position.x + shape.circle.getRadius()  >= m_window_configuration.W && transform.velocity.x > 0
+				)
 				{
-					increment = 1;
-					is_going_right = !is_going_right;
-				}
-				else if ((transform.position.x + shape.circle.getRadius() >= m_window_configuration.W) && is_going_right)
-				{
-					increment = -1;
-					is_going_right = !is_going_right;
+					transform.velocity.x *= 1;
 				}
 
-				transform.position.x += increment;
+				if (
+					transform.position.y - shape.circle.getRadius() <= 0 && transform.velocity.y < 0
+					|| transform.position.y + shape.circle.getRadius()  >= m_window_configuration.H && transform.velocity.y > 0
+				)
+				{
+					transform.velocity.y *= 1;
+				}
+
+				// update transform position
+				transform.position += transform.velocity;
 				// update shape position
 				shape.circle.setPosition(transform.position);
 				// update transform rotation
@@ -602,8 +617,6 @@ void Game::systemRender()
 
 			}
 		}
-
-		//std::cout << entity_count << std::endl;
 	}
 
 
@@ -695,7 +708,6 @@ void Game::systemInput()
 			{
 				std::cout << "Right: (" << event.mouseButton.x << ", "
 					<< event.mouseButton.y << ")" << std::endl;
-				spawnEnemyLarge();
 
 				// use mouse position (along with player position) to determine
 				// trajectory of the bullet

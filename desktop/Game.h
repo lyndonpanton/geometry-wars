@@ -4,6 +4,8 @@
 #define GAME_H
 
 #include <string>
+#include <time.h>
+#include <random>
 
 #include "SFML/Graphics.hpp"
 
@@ -83,8 +85,6 @@ class Game
 
 public:
 	// member
-	int increment = 1;
-	bool is_going_right = true; // for testing
 
 	// constructor
 	Game(const std::string&);
