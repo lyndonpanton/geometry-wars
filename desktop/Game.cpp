@@ -166,6 +166,13 @@ void Game::init(const std::string& filepath)
 				>> outline_colour_green >> outline_colour_blue
 				>> outline_thickness >> vertice_count >> lifespan;
 
+			m_bullet_configuration = {
+				shape_radius, collision_radius, fill_colour_red,
+				fill_colour_green, fill_colour_blue, outline_colour_red,
+				outline_colour_green, outline_colour_blue, outline_thickness,
+				vertice_count, lifespan, speed
+			};
+
 			std::cout << "Bullet configuration read" << std::endl;
 		}
 		else
@@ -196,10 +203,10 @@ std::shared_ptr<Entity> Game::player()
 
 void Game::run()
 {
-	// add pause functionality
-	// - some systems should function whilst paused (i.e., rendering)
-	// - some systems should not function whilst paused (e.g., movement, input)
-	// - current frame should not increment whilst paused
+	// add pause functionality -> DONE
+	// - some systems should function whilst paused (i.e., rendering) -> DONE
+	// - some systems should not function whilst paused (e.g., movement, input) -> DONE
+	// - current frame should not increment whilst paused -> DONE
 
 	while (m_is_running)
 	{
@@ -373,6 +380,55 @@ void Game::spawnBullet(std::shared_ptr<Entity> entity, const Vec2f& target)
 	// spawn a bullet at a given entity to a target location
 	// bullet speed is given as a scalar speed
 	// use formula in notes to set the velocity
+
+	/* TODO
+	* 
+	* - Normalise the vector so all bullets travel at the same speed
+	* - Add functionality so that bullet are destroyed after their lifespan has
+	* finished
+	*/
+
+	// Collision Component
+	entity->add<CCollision>(
+		m_bullet_configuration.CR
+	);
+
+	// Lifespan Component
+	entity->add<CLifespan>(
+		m_bullet_configuration.L
+	);
+
+	// Shape Component
+	entity->add<CShape>(
+		m_bullet_configuration.SR,
+		m_bullet_configuration.V,
+		sf::Color(
+			m_bullet_configuration.FR,
+			m_bullet_configuration.FG,
+			m_bullet_configuration.FB
+		),
+		sf::Color(
+			m_bullet_configuration.OR,
+			m_bullet_configuration.OG,
+			m_bullet_configuration.OB
+		),
+		m_bullet_configuration.OT
+	);
+
+	// Transform Component
+	Vec2f position(player()->get<CTransform>().position);
+
+	Vec2f velocity(
+		(target.x - position.x) / 1000,
+		(target.y - position.y) / 1000
+	);
+	float angle = 0.0f;
+
+	entity->add<CTransform>(
+		position,
+		velocity,
+		angle
+	);
 }
 
 void Game::spawnSpecialAbility(std::shared_ptr<Entity> entity)
@@ -432,9 +488,13 @@ void Game::systemLifespan()
 
 		if (!lifespan.exists) continue;
 
-		if (lifespan.lifespan_remaining >= 0)
+		if (lifespan.lifespan_remaining > 0)
 		{
 			lifespan.lifespan_remaining -= 1;
+			std::cout << "Lifespan total: " << lifespan.lifespan_total
+				<< std::endl;
+			std::cout << "Lifespan remaining: " << lifespan.lifespan_remaining
+				<< std::endl;
 		}
 		
 		if (entity->getIsActive())
@@ -442,9 +502,9 @@ void Game::systemLifespan()
 			// modify alpha channel
 		}
 
-		if (lifespan.lifespan_remaining < 0)
+		if (lifespan.lifespan_remaining <= 0)
 		{
-			
+			// destroy entity
 		}
 	}
 }
@@ -578,13 +638,11 @@ void Game::systemRender()
 			}
 
 
-			if (entity->getTag() == "enemy")
+			if (entity->getTag() == "enemy" || entity->getTag() == "bullet")
 			{
 
 				auto& shape = entity->get<CShape>();
 				auto& transform = entity->get<CTransform>();
-
-				//std::cout << ""
 
 				if (
 					transform.position.x - shape.circle.getRadius() <= 0 && transform.velocity.x < 0
@@ -617,6 +675,36 @@ void Game::systemRender()
 			else if (entity->getTag() == "bullet")
 			{
 
+				auto& shape = entity->get<CShape>();
+				auto& transform = entity->get<CTransform>();
+
+				if (
+					transform.position.x - shape.circle.getRadius() <= 0 && transform.velocity.x < 0
+					|| transform.position.x + shape.circle.getRadius() >= m_window_configuration.W && transform.velocity.x > 0
+					)
+				{
+					transform.velocity.x *= -1;
+				}
+
+				if (
+					transform.position.y - shape.circle.getRadius() <= 0 && transform.velocity.y < 0
+					|| transform.position.y + shape.circle.getRadius() >= m_window_configuration.H && transform.velocity.y > 0
+					)
+				{
+					transform.velocity.y *= -1;
+				}
+
+				// update transform position
+				transform.position += transform.velocity;
+				// update shape position
+				shape.circle.setPosition(transform.position);
+				// update transform rotation
+				transform.angle += (1.0f / m_window_configuration.FL);
+				// update shape rotation using transform rotation
+				shape.circle.setRotation(transform.angle);
+
+				// draw enemy sf::CircleShape
+				m_render_window.draw(entity->get<CShape>().circle);
 			}
 		}
 	}
@@ -701,9 +789,12 @@ void Game::systemInput()
 				std::cout << "Left: (" << event.mouseButton.x << ", "
 					<< event.mouseButton.y << ")" << std::endl;
 
+				auto entity = m_entities.addEntity("bullet");
+
 				// use mouse position (along with player position) to determine
 				// trajectory of the bullet
 				// and then spawn the bullet
+				spawnBullet(entity, Vec2f(event.mouseButton.x, event.mouseButton.y));
 			}
 
 			if (event.mouseButton.button == sf::Mouse::Right)
