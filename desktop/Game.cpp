@@ -180,6 +180,7 @@ void Game::init(const std::string& filepath)
 	ImGui::GetIO().FontGlobalScale = 2.0f;
 
 	spawnPlayer();
+	spawnEnemyLarge();
 }
 
 // since the player will be referred to a lot, here is a method to retrieve
